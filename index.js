@@ -18,7 +18,7 @@ ConnectDb();
 
 const io=new Server(httpServer,{
     cors:{
-        origin:"http://localhost:3000",
+        origin:["http://localhost:3000","https://polling-systems.vercel.app/"],
         methods:['GET','POST']
     }
 })
@@ -134,8 +134,9 @@ function closeServer() {
     });
   }
   
+  const Port=3001 | process.env.PORT;
 function call(){
-    httpServer.listen(3001,()=>{
+    httpServer.listen(Port,()=>{
         console.log("server is listening");
     })
 }
