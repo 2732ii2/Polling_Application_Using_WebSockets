@@ -7,7 +7,7 @@ import ConnectDb from "./Db.js";
 import Pollsmodel from "./Model.js";
 import randomstring  from "randomstring";
 import querystring from "query-string";
-import fetch from 'node-fetch'
+// import fetch from 'node-fetch'
 import fs  from 'fs'
 import { getArtists, SpotifyCall } from "./SpotifyApiCalls.js";
 import json from "body-parser/lib/types/json.js";
