@@ -7,16 +7,20 @@ import ConnectDb from "./Db.js";
 import Pollsmodel from "./Model.js";
 import randomstring  from "randomstring";
 import querystring from "query-string";
+import bcrypts from "bcrypt";
+import jsonwebtoken from "jsonwebtoken";
+
 // import fetch from 'node-fetch'
 import fs  from 'fs'
 import { getArtists, SpotifyCall } from "./SpotifyApiCalls.js";
 import json from "body-parser/lib/types/json.js";
 import axios from "axios";
 import {Book} from "./BooksModel.js";
+import LibraryUser from "./UserModel.js";
 const app = express();
 app.use(cors());
 
-
+const jwtsecret="123ashad";
 
 
 
@@ -93,7 +97,7 @@ async function FirstTimeCall(){
      pollsData=(pollsData[0]?.pollsData);
      console.log(pollsData);
 }
-FirstTimeCall();
+// FirstTimeCall();
 var c=0;
 async function datacount(){
     const count= await Book.find();
@@ -102,11 +106,12 @@ async function datacount(){
             return e;
         }
     })
+    var totalUser=await LibraryUser.find();
     console.log("count=>",count.length,borrowedCount.length);
     c=count.length;
-    return [count.length,borrowedCount.length];
+    return [count.length,borrowedCount.length , totalUser.length];
 }
-datacount();
+// datacount();
 console.log("c=>",c);
 io.on('connection',async(socket)=>{
     console.log(socket.id);
@@ -122,6 +127,10 @@ io.on('connection',async(socket)=>{
     })
     socket.on("libraryemits",room=>{
         console.log(room);
+        socket.join(room);
+    })
+    socket.on("loginemits",room=>{
+        console.log("login emits listen by server");
         socket.join(room);
     })
     socket.on("favourites",room=>{
@@ -302,7 +311,21 @@ function call(){
         console.log("server is listening");
     })
 }
-
+// updatebook
+app.post('/updatebook',async(req,res)=>{
+    try{
+        console.log(req.body);
+    const {id,data}=req.body;
+    const resp=await Book.updateOne({_id:id},{
+        $set:data
+    });
+    console.log("resp",resp);
+    res.json({msg:"updated"})
+    }
+    catch(e){
+        console.log(e?.message);
+    }
+})
 
 app.post("/borrow",async(req,res)=>{
     var {startDate,endDate,id}=req.body;
@@ -360,6 +383,44 @@ app.get('/login', function(req, res) {
 
 
 app.post('/login',SpotifyCall)
+app.get("/deleteusers",async (req,res)=>{
+    await LibraryUser.deleteMany();
+    res.json({mess:"users deleted successfully "})
+})
+app.post('/register',async(req,res)=>{
+    console.log(req.body);
+    // user IS there
+    const User=await LibraryUser.find({
+        $or: [
+          { UserName: { $regex: new RegExp('^' + `${req.body?.UserName}` + '$', 'i') } },
+          { Email: { $regex: new RegExp('^' +`${req.body?.Email}` + '$', 'i') } }
+        ]
+      });
+    console.log(User);
+    if(User.length){
+        res.json({'error':"user is already there"});
+    }
+    // user is not there 
+    else{
+        const CryptedPassword=await bcrypts.hash(`${req.body?.Password}`,10);
+        console.log(CryptedPassword);
+        const {body}=req;
+       const obj= {...body,"Password":CryptedPassword};
+       console.log(obj);
+    //    const check= "$2b$10$H8kSqjb2B.040kQNtYYvLeiLZTwOuvc3/D/ZjQz0teSFCQRvjQ1jG";
+    //   const checking= await bcrypts.compare(`${req.body?.Password}`,check); 
+    //   console.log(req.body);
+    // jwtsecret
+        const jsontoken= await jsonwebtoken.sign(obj,jwtsecret);
+        console.log(jsontoken);
+        const newUser= new LibraryUser(obj);
+        await newUser.save();
+        res.json({mess:"user is saved",token:jsontoken,userprofile:obj});
+    }
+//   res.json({mess:"Getting an response"});
+});
+
+
 
 // app.post('/clear',async(req,res)=>{
 //     console.log(req.body);
