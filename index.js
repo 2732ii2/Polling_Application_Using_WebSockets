@@ -106,8 +106,8 @@ async function datacount(){
             return e;
         }
     })
-    var totalUser=await LibraryUser.find();
-    console.log("count=>",count.length,borrowedCount.length);
+    const totalUser=await LibraryUser.find();
+    console.log("count all =>",count.length,borrowedCount.length);
     c=count.length;
     return [count.length,borrowedCount.length , totalUser.length];
 }
@@ -143,7 +143,7 @@ io.on('connection',async(socket)=>{
         for(var i=0;i<2;i++){
             count=await datacount();
         }
-        console.log("count 1=>",count);
+        console.log("count 2 3 =>",count);
         io.in(data[0]).emit('updatedcountofBooks',count);
     })
    
