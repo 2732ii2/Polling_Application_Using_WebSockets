@@ -387,6 +387,42 @@ app.get("/deleteusers",async (req,res)=>{
     await LibraryUser.deleteMany();
     res.json({mess:"users deleted successfully "})
 })
+app.post("/signin",async(req,res)=>{
+    console.log(req.body);
+    const { Email , Password}=req.body;
+    //  if we have email in our login we try to give token
+    try{
+        const resp=await LibraryUser.find({Email:Email});
+        console.log(resp);
+        if(resp.length){
+            // means user is there just to need to verify password;
+            // and give to token it ;
+            const cryptedPassword= await bcrypts.compare(Password,resp[0].Password);
+            console.log(cryptedPassword);
+            if(cryptedPassword){
+                // that means password is correct
+               const token=await jsonwebtoken.sign({Email:Email,Password:Password},jwtsecret);
+               console.log(token);
+                res.json({mess:"user Successfully Login",token,userprofile:resp[0]});
+                // res.json({mess:"successfully recieved"});
+            }
+            else{
+                // password is wrong
+                res.json({mess:"Invalid login Credentials"});
+            }
+            // bcrypts.compare()
+            
+        }
+        else{
+            res.json({mess:"User doesn't exists"});
+        }
+    }
+    catch(e){
+        res.json({mess:e?.message});
+    }
+    //  else we said user doesn't have an account
+    
+})
 app.post('/register',async(req,res)=>{
     console.log(req.body);
     // user IS there
