@@ -109,7 +109,7 @@ async function datacount(){
     const totalUser=await LibraryUser.find();
     console.log("count all =>",count.length,borrowedCount.length);
     c=count.length;
-    return [count.length,borrowedCount.length , totalUser.length];
+    return [count.length,borrowedCount.length , totalUser.length,totalUser,count];
 }
 // datacount();
 console.log("c=>",c);
