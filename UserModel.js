@@ -4,7 +4,8 @@ const UserSchema=new Schema({
     "Email":String,
     "password":String,
     "type":String,
-    "isallowed":Boolean
+    "isallowed":Boolean,
+    "BorrowedList":[{type:String}]
 },{strict:false});
 const LibraryUser=model("libraryUser",UserSchema);
 export default LibraryUser;

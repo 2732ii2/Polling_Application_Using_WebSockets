@@ -28,7 +28,7 @@ const jwtsecret="123ashad";
 
 //     try{
 //         // const url = 'https://www.googleapis.com/books/v1/volumes?q=newarrivals+terms&startIndex=0&maxResults=100';
-//         const resp= await fetch(`https://www.googleapis.com/books/v1/volumes?q=trendins+books+terms`);
+//         const resp= await fetch(`https://www.googleapis.com/books/v1/volumes?q=newarrivals+books+terms`);
 //         var data=(await resp.json());
 //         data=data.items.map(item => {
 //             var d=(item?.volumeInfo?.imageLinks?.thumbnail);
@@ -42,7 +42,7 @@ const jwtsecret="123ashad";
 //                 ...item,volumeInfo:{
 //                     ...item.volumeInfo,imageLinks:[d],industryIdentifiers:c?[...c]:[]
 //                 },
-//                 type: 'trendings'
+//                 type: 'new_arrivals'
 //               }
          
 //         });
@@ -328,8 +328,8 @@ app.post('/updatebook',async(req,res)=>{
 })
 
 app.post("/borrow",async(req,res)=>{
-    var {startDate,endDate,id}=req.body;
-    console.log(startDate,endDate,id);
+    var {startDate,endDate,id,user_id}=req.body;
+    console.log(startDate,endDate,id,user_id);
 
    try{
     const resp = await Book.findOne({ _id: id});
@@ -340,13 +340,23 @@ app.post("/borrow",async(req,res)=>{
          startDate: new Date(startDate), // Ensure date fields are in Date format
         endDate: new Date(endDate),     // Ensure date fields are in Date format
         "borrowed": true,
-        "overdue": false}});
-    console.log(updatedresult);
+        "overdue": false,
+        'UserId':user_id
+    }});
+    var UserObj=await LibraryUser.find({_id:user_id});
+    var arrOne=(UserObj?.length?UserObj[0]?.BorrowedList:[]);
+    arrOne.push(id);
+    const updatedUser=await LibraryUser.updateOne({_id:user_id},{$set:{
+        'BorrowedList':arrOne
+    }})
+    console.log(updatedresult,updatedUser);
+    res.json({mess:"data has updated"});    
    }
    catch(e){
     console.log(e);
+    res.json({error:e?.message});
    }
-    res.json({mess:"data has been send"});
+    
 
 })
 
@@ -441,8 +451,8 @@ app.post('/register',async(req,res)=>{
         const CryptedPassword=await bcrypts.hash(`${req.body?.Password}`,10);
         console.log(CryptedPassword);
         const {body}=req;
-       const obj= {...body,"Password":CryptedPassword};
-       console.log(obj);
+       const obj= {...body,"Password":CryptedPassword,"BorrowedList":[]};
+       console.log("obj",obj);
     //    const check= "$2b$10$H8kSqjb2B.040kQNtYYvLeiLZTwOuvc3/D/ZjQz0teSFCQRvjQ1jG";
     //   const checking= await bcrypts.compare(`${req.body?.Password}`,check); 
     //   console.log(req.body);
@@ -451,7 +461,7 @@ app.post('/register',async(req,res)=>{
         console.log(jsontoken);
         const newUser= new LibraryUser(obj);
         await newUser.save();
-        res.json({mess:"user is saved",token:jsontoken,userprofile:obj});
+        res.json({mess:"user is saved",token:jsontoken,userprofile:newUser});
     }
 //   res.json({mess:"Getting an response"});
 });
